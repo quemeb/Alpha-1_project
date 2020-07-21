@@ -5,7 +5,7 @@ date: "6/15/2020"
 output: html_document
 ---
 
-Always load these libraries
+Always load these librarie
 
 ```{r libraries}
 
