@@ -1,0 +1,241 @@
+---
+title: "Alplha-1 analysis"
+author: "Bryan Queme"
+date: "6/15/2020"
+output: html_document
+---
+
+Always load these libraries
+
+```{r libraries}
+
+library(tidyverse)
+library(data.table)
+
+```
+
+
+```{r file loading}
+
+ifile <- file.choose()
+
+cdata <- read.csv(ifile)
+
+```
+
+Calculating how many unique compounds in the library
+
+```{r unique NCGC}
+
+ncgc_batch <- cdata %>% select(Sample.ID)
+ncgc_batch_sep <- ncgc_batch %>% separate(Sample.ID, c("NCGC","Batch"))
+ncgc_no_batch <- ncgc_batch_sep %>% select(NCGC)
+ncgc_unique <- unique(ncgc_no_batch)
+
+print(length(ncgc_unique$NCGC))
+
+```
+
+Number of compunds by curve class
+
+```{r}
+
+grouped <- cdata %>% group_by(CC.v2)
+
+count(grouped)
+
+
+```
+
+When we want to validate high curve classes from two different files
+
+```{r high_curve_class}
+
+high_curves = c(1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 
+              -1.1, -1.2, -1.3, -2.1, -2.2, -2.3)
+
+if(exists("cdata") == FALSE){
+  ifile <- file.choose()
+  cdata <- read.csv(ifile)
+}
+
+
+file_1 <- cdata %>% filter(CC.v2 %in% high_curves)
+
+i.file <- file.choose()
+c.data <- read.csv(i.file)
+
+file_2 <- c.data %>% filter(CC.v2 %in% high_curves)
+
+
+common <- subset(file_1, file_1$Sample.ID %in% file_2$Sample.ID)
+
+
+fwrite(x=common,
+	file = paste(ifile, "validation_CCs.csv"),
+	sep=","
+)
+
+
+#sanity check to make sure we get the same numbers in both cases
+#x <- intersect(file_1$Sample.ID,file_2$Sample.ID)
+
+
+```
+
+
+
+```{r Separates CCs}
+
+high_curves = c(1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 
+              -1.1, -1.2, -1.3, -2.1, -2.2, -2.3)
+
+low_curves = c(1.4, 2.4, 3,
+               -1.4,-2.4,-3,
+                4, 5)
+
+ifile <- file.choose()
+cdata <- read.csv(ifile, header=TRUE, na.string="null")
+
+
+### high-CCs
+file_1 <- cdata %>% filter(CC.v2 %in% high_curves)
+
+fwrite(file_1,
+	paste(ifile,"_high_CCs.csv"),
+	sep=","
+)
+
+
+### low-CCs
+file_2 <- cdata %>% filter(CC.v2 %in% low_curves)
+
+fwrite(file_2,
+	paste(ifile,"_low_CCs.csv"),
+	sep=","
+)
+
+```
+
+Checking enhancemenet or inhibitors per library
+
+```{r high_curve_class}
+
+enhancers = c(1.1, 1.2, 1.3, 2.1, 2.2, 2.3)
+inhibitors = c(-1.1, -1.2, -1.3, -2.1, -2.2, -2.3)
+
+
+if(exists("cdata") == FALSE){
+  ifile <- file.choose()
+  cdata <- read.csv(ifile)
+}
+
+i.file <- file.choose()
+c.data <- read.csv(i.file)
+
+{ #
+file_1 <- cdata %>% filter(CC.v2 %in% enhancers)
+file_2 <- c.data %>% filter(CC.v2 %in% enhancers)
+common <- subset(file_1, file_1$Sample.ID %in% file_2$Sample.ID)
+fwrite(x=common,
+	file = paste(i.file, "follow_enhancer-enhancer.csv"),
+	sep=","
+)
+}
+
+{ # 
+file_1 <- cdata %>% filter(CC.v2 %in% inhibitors)
+file_2 <- c.data %>% filter(CC.v2 %in% inhibitors)
+common <- subset(file_1, file_1$Sample.ID %in% file_2$Sample.ID)
+fwrite(x=common,
+	file = paste(i.file, "follow_inhibitor-inhibitor.csv"),
+	sep=","
+)
+}
+
+
+{
+file_1 <- cdata %>% filter(CC.v2 %in% enhancers)
+file_2 <- c.data %>% filter(CC.v2 %in% inhibitors)
+common <- subset(file_1, file_1$Sample.ID %in% file_2$Sample.ID)
+fwrite(x=common,
+	file = paste(i.file, "follow_enhancer-inhibitor.csv"),
+	sep=","
+)
+}
+
+
+{
+file_1 <- cdata %>% filter(CC.v2 %in% inhibitors)
+file_2 <- c.data %>% filter(CC.v2 %in% enhancers)
+common <- subset(file_1, file_1$Sample.ID %in% file_2$Sample.ID)
+fwrite(x=common,
+	file = paste(i.file, "follow_inhibitor-enhancer.csv"),
+	sep=","
+)
+}
+
+```
+
+
+```{r high_curve_class}
+
+enhancers = c(1.1, 1.2, 1.3, 2.1, 2.2, 2.3)
+inhibitors = c(-1.1, -1.2, -1.3, -2.1, -2.2, -2.3)
+
+enhancers_f = c(1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 
+                1.4, 2.4, 3)
+inhibitors_f = c(-1.1, -1.2, -1.3, -2.1, -2.2, -2.3,
+                 -1.4,-2.4,-3)
+
+if(exists("cdata") == FALSE){
+  ifile <- file.choose()
+  cdata <- read.csv(ifile)
+}
+
+i.file <- file.choose()
+c.data <- read.csv(i.file)
+
+{ #
+file_1 <- cdata %>% filter(CC.v2 %in% enhancers_f)
+file_2 <- c.data %>% filter(CC.v2 %in% enhancers)
+common <- subset(file_1, file_1$Sample.ID %in% file_2$Sample.ID)
+fwrite(x=common,
+	file = paste(i.file, "follow_enhancer-enhancer_1.4.csv"),
+	sep=","
+)
+}
+
+{ # 
+file_1 <- cdata %>% filter(CC.v2 %in% inhibitors_f)
+file_2 <- c.data %>% filter(CC.v2 %in% inhibitors)
+common <- subset(file_1, file_1$Sample.ID %in% file_2$Sample.ID)
+fwrite(x=common,
+	file = paste(i.file, "follow_inhibitor-inhibitor_1.4.csv"),
+	sep=","
+)
+}
+
+
+{
+file_1 <- cdata %>% filter(CC.v2 %in% enhancers_f)
+file_2 <- c.data %>% filter(CC.v2 %in% inhibitors)
+common <- subset(file_1, file_1$Sample.ID %in% file_2$Sample.ID)
+fwrite(x=common,
+	file = paste(i.file, "follow_enhancer-inhibitor_1.4.csv"),
+	sep=","
+)
+}
+
+
+{
+file_1 <- cdata %>% filter(CC.v2 %in% inhibitors_f)
+file_2 <- c.data %>% filter(CC.v2 %in% enhancers)
+common <- subset(file_1, file_1$Sample.ID %in% file_2$Sample.ID)
+fwrite(x=common,
+	file = paste(i.file, "follow_inhibitor-enhancer_1.4.csv"),
+	sep=","
+)
+}
+
+```
